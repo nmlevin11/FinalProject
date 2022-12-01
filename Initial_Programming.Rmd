@@ -1,0 +1,61 @@
+---
+title: "Initial Code for Data Manipulation and Modeling"
+author: "Nicole Levin"
+date: "2022-11-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Start with importing data
+```{r}
+#Add packages
+library(tidyverse)
+
+#Import the data
+red_data <- read_delim("winequality-red.csv", delim = ";")
+white_data <- read_delim("winequality-white.csv", delim = ";")
+
+#Add variables for type (red or white)
+red_data2 <- cbind(red_data, type = "red")
+white_data2 <- cbind(white_data, type = "white")
+
+#Conbine datasets
+wine_data <- rbind(red_data2, white_data2)
+wine_data <- wine_data %>% rename(fixed_acidity = 'fixed acidity', volatile_acidity = 'volatile acidity', citric_acid = 'citric acid', residual_sugar = 'residual sugar', free_SO2 = 'free sulfur dioxide', total_SO2 = 'total sulfur dioxide')
+
+```
+
+Now add in info that will go on the app "pages" starting with the about page.
+
+About this app:
+Add details later
+```{r}
+#Blank code chunk in case I want to add some code related to the about section.
+```
+
+Data Exploration:
+Here I will add code for doing some numerical and graphical summaries. 
+Include a variable for selecting type of plot and type of summary.
+Include options to change variables and filter rows.
+```{r}
+#Input test variable selections
+plot_choice <- "scatterplot"
+summary_choice <- "mean_sd"
+type_choice <- "red"
+
+#Need to think through how we want to do column (variable) selection here
+x_var <- "pH"
+
+
+#Need to add column selection to this
+wine_data_subset <- wine_data %>% filter(type_choice)
+
+if(plot_choice = "scatterplot"){
+  ggplot(wine_data_subset, aes(x = x_var, y = quality))
+}
+
+```
+
