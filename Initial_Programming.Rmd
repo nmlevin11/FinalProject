@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Start with importing data
 ```{r}
 #Add packages
+library(caret)
 library(tidyverse)
 
 #Import the data
@@ -24,8 +25,12 @@ white_data2 <- cbind(white_data, type = "white")
 
 #Conbine datasets
 wine_data <- rbind(red_data2, white_data2)
-wine_data <- wine_data %>% rename(fixed_acidity = 'fixed acidity', volatile_acidity = 'volatile acidity', citric_acid = 'citric acid', residual_sugar = 'residual sugar', free_SO2 = 'free sulfur dioxide', total_SO2 = 'total sulfur dioxide')
+wine_data <- wine_data %>% rename(fixed_acidity = 'fixed acidity', volatile_acidity = 'volatile acidity', citric_acid = 'citric acid', residual_sugar = 'residual sugar', free_SO2 = 'free sulfur dioxide', total_SO2 = 'total sulfur dioxide', qual_orig = 'quality')
 
+#Add variable for quality with >5 = good and otherwise bad
+wine_data <- wine_data %>% mutate(quality = if_else(qual_orig >5, "good", "bad") )
+wine_data$quality <- factor(wine_data$quality)
+wine_data <- wine_data[,-12]
 ```
 
 Now add in info that will go on the app "pages" starting with the about page.
@@ -57,5 +62,50 @@ if(plot_choice = "scatterplot"){
   ggplot(wine_data_subset, aes(x = x_var, y = quality))
 }
 
+```
+
+Now setup the modeling page. I need to include logistic regression, a regression tree and a random forest
+```{r}
+#First split data into training and test set. Set seed for now. Can remove later.
+set.seed(371)
+
+#Allow this to be user-defined
+prop_choice <- 0.7
+m_choice <- 3
+
+train_index <- createDataPartition(wine_data$quality, p=prop_choice, list=FALSE)
+data_train <- wine_data[train_index, ]
+data_test <- wine_data[-train_index, ]
+
+#Logistic regression fit
+regression_fit <-train(quality ~ ., data = data_train, method= "glm", family = "binomial", preProcess = c("center", "scale"), trControl = trainControl(method = "cv", number = 10))
+
+#Tree fit. Need to look at cp tunegrid. May need to be user selected.
+tree_fit <-train(quality ~ ., data = data_train, method= "rpart", preProcess = c("center", "scale"), tuneGrid = data.frame(cp = seq(0, 0.1, 0.001)), trControl = trainControl(method = "cv", number = 10))
+
+#Random forest fit.
+rf_fit <-train(quality ~ ., data = data_train, method= "rf", preProcess = c("center", "scale"), tuneGrid = data.frame(mtry = m_choice), trControl = trainControl(method = "cv", number = 10))
+
+#Get some results
+#Regression
+summary(regression_fit$finalModel)
+regression_fit$results
+
+#Regression tree
+tree_fit$results
+plot(tree_fit)
+
+#Random forest. Need to add a plot showing the variable importance?
+rf_fit$results
+
+
+```
+
+Now the prediction tab
+```{r}
+#Comare using accuracy via confusion matrix
+confusionMatrix(regression_fit, newdata = test)
+confusionMatrix(tree_fit, newdata = test)
+confusionMatrix(rf_fit, newdata = data_test)
 ```
 
