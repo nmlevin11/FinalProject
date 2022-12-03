@@ -31,6 +31,13 @@ wine_data <- wine_data %>% rename(fixed_acidity = 'fixed acidity', volatile_acid
 wine_data <- wine_data %>% mutate(quality = if_else(qual_orig >5, "good", "bad") )
 wine_data$quality <- factor(wine_data$quality)
 wine_data <- wine_data[,-12]
+wine_data <- wine_data %>% select(alcohol, volatile_acidity, type, sulphates, residual_sugar, total_SO2, quality)
+
+testplot <- ggplot(data=wine_data, aes(x=alcohol)) + 
+  geom_bar()
+
+testplot
+
 ```
 
 Now add in info that will go on the app "pages" starting with the about page.
