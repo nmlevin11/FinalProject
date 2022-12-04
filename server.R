@@ -23,20 +23,32 @@ wine_data$quality <- factor(wine_data$quality)
 wine_data <- wine_data[,-12]
 #wine_data <- wine_data %>% select(alcohol, volatile_acidity, type, sulphates, residual_sugar, total_SO2, quality)
 
-output$testplot <- ggplot(data=wine_data, aes(x=alcohol, y=sulphates)) + 
-  geom_point()
-
-
-shinyServer(function(input, output){
+shinyServer(function(input, output, session){
   #Table Setup
-  output$tab <- renderDataTable({wine_data %>%
-    select("type", "alcohol") %>% 
-    group_by(type) %>%
-    summarize("Mean Alcohol" = round(mean(alcohol), 2))
+  output$tab <- renderDataTable({
+    variable_choice <- input$x_choice
+    if(input$summary_choice == "mean"){
+      wine_data %>%
+        select("type", variable_choice) %>% 
+        group_by(type) %>%
+        summarize("Mean" = round(mean(get(input$x_choice)), 2))
+    } else{
+      wine_data %>%
+        select("type", variable_choice) %>% 
+        group_by(type) %>%
+        summarize("Median" = round(median(get(input$x_choice)), 2))
+    }
   })
   #Plot setup. If statements used to decide which plot to make. For now just put a plot in.
-  output$dataPlot <- reactive(function(){
-    ggplot(data=wine_data, aes(x=alcohol)) + 
-      geom_bar()
+  output$dataPlot <- renderPlot({
+    if(input$plot_choice=="Histogram"){
+      ggplot(data=wine_data, aes(x=get(input$x_choice))) + 
+        geom_histogram()
+    } else {
+      ggplot(data=wine_data, aes(x=get(input$x_choice))) + 
+        geom_boxplot()
+    }
   })
+  
+  
 })
