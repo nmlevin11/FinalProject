@@ -50,5 +50,28 @@ shinyServer(function(input, output, session){
     }
   })
   
+  #Table of data for data tab
+  data_selected <- reactive({
+    wine_data %>%
+      select(input$data_choice)
+  })
+  output$data_table <- renderDataTable({
+    data_selected()
+  })
+    
+  
+  # downloadHandler() takes two arguments, both functions.
+  # The content function is passed a filename as an argument, and
+  #   it should write out data to that filename.
+  output$downloadData <- downloadHandler(
+    filename = "wine_export.csv",
+    
+    # This function should write data to a file given to it by the argument 'file'.
+    content = function(file) {
+      
+      # Write to a file specified by the 'file' argument. Right now this just uses my whole dataset.
+      write.table(data_selected(), file, sep = ",", row.names = FALSE)
+    }
+  )
   
 })

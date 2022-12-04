@@ -93,8 +93,27 @@ body <- dashboardBody(
             )
             
     ),
-    #Right now this just has test stuff in it
+    #Data tab. Still need to add row filtering options.
     tabItem(tabName = "Data",
+            sidebarLayout(
+              
+              sidebarPanel(checkboxGroupInput("data_choice",
+                                              label = "Variable Options",
+                                              choices = c("alcohol", 
+                                                          "volatile_acidity", 
+                                                          "type", 
+                                                          "sulphates", 
+                                                          "residual_sugar",
+                                                          "total_SO2",
+                                                          "quality"), 
+                                              selected = "alcohol"),
+                downloadButton('downloadData', 'Download')
+              ),
+                mainPanel(h1("Table of Selected Data"), dataTableOutput("data_table")
+                          )
+              
+            )
+            
     )
   )
 )
