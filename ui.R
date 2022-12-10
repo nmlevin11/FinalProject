@@ -1,9 +1,11 @@
 
 library(caret)
 library(shiny)
+library(shinythemes)
 library(DT)
 library(shinydashboard)
 library(png)
+library(randomForest)
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
@@ -14,7 +16,7 @@ sidebar <- dashboardSidebar(
   )
 )
 
-body <- dashboardBody(
+body <- dashboardBody(width = 600,
   tabItems(
     tabItem(tabName = "About",
             sidebarLayout(sidebarPanel(img(src = "wine glass.png", height = "100%", 
@@ -79,7 +81,7 @@ body <- dashboardBody(
             mainPanel(
               title = "Modeling",
               tabsetPanel(type = "tabs",
-                          tabPanel("Model Info", 
+                          tabPanel("Model Info",
                                    h3("Logistic Regression"),
                                    h5("In the logistic regression model the goal
                                       is to model a binary outcome using a linear 
@@ -126,7 +128,12 @@ body <- dashboardBody(
                                                                     "sulphates", 
                                                                     "residual_sugar",
                                                                     "total_SO2"), 
-                                                        selected = "alcohol"),
+                                                        selected = c("alcohol",
+                                                                   "volatile_acidity", 
+                                                                    "type", 
+                                                                    "sulphates", 
+                                                                    "residual_sugar",
+                                                                    "total_SO2")),
                                      h4("Select model tuning parameters"),
                                      sliderInput("p_choice", label = "Proportion for data split",
                                                  min=0.1, max=0.9, step=0.05, value = 0.7),
@@ -136,7 +143,34 @@ body <- dashboardBody(
                                                  min = 1, max = 5, step = 1, value = 3),
                                      actionButton("go", "Run Models")
                                    ),
-                                   mainPanel(dataTableOutput("reg_results"))
+                                   mainPanel(tabsetPanel(type = "tabs",
+                                     tabPanel("Logistic Regression", box(width = 200,
+                                                 h3("Logistic Regression Model"),
+                                                 h4("Fit Statistics"),
+                                                 tableOutput("reg_table"),
+                                                 h4("Model Summary"),
+                                                 box(width = 200, verbatimTextOutput("reg_summary")),
+                                                 h4("Accuracy Predicting Test Data"),
+                                                 box(width = 200, verbatimTextOutput("reg_conf")))),
+                                     tabPanel("Classification Tree", box(width = 200,
+                                              h3("Classification Tree Model"),
+                                               h4("Fit Statistics"),
+                                                        tableOutput("tree_table"),
+                                                        h4("Model Summary"),
+                                                        plotOutput("tree_summary"),
+                                                        h4("Accuracy Predicting Test Data"),
+                                                        box(width = 200, 
+                                                            verbatimTextOutput("tree_conf")))),
+                                     tabPanel("Random Forest", box(width = 200, 
+                                              h3("Random Forest Model"),
+                                                        h4("Fit Statistics"),
+                                                        tableOutput("rf_table"),
+                                                        h4("Model Summary"),
+                                                        plotOutput("rf_summary"),
+                                                        h4("Accuracy Predicting Test Data"),
+                                                        box(width = 100, verbatimTextOutput("rf_conf")))
+                                     ) 
+                                     ))
                                    ),
                           tabPanel("Prediction", sidebarLayout(
                                    sidebarPanel(h4("Select values of predictors"),
@@ -216,7 +250,7 @@ body <- dashboardBody(
   )
 )
 
-dashboardPage(
+dashboardPage(skin = "red",
   dashboardHeader(title = "A Sip of Stats"),
   sidebar,
   body

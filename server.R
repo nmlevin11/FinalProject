@@ -3,6 +3,7 @@ library(shiny)
 library(caret)
 library(tidyverse)
 library(DT)
+library(randomForest)
 
 
 #Import the data
@@ -25,6 +26,54 @@ wine_data <- wine_data %>% select(alcohol, volatile_acidity, type, sulphates, re
 
 #Run logistic regression with all variables to use with prediction tab.
 pred_model <- glm(quality ~ ., data = wine_data, family = "binomial")
+
+#Functions to use for modeling
+#Function to split data into training and test sets
+split_fun <- function(selection, p_choice){
+  model_data <- wine_data %>% select(selection, quality)
+  train_index <- createDataPartition(model_data$quality, p=p_choice, list=FALSE)
+  data_train <- model_data[train_index, ]
+  data_test <- model_data[-train_index, ]
+  return(list(data_train, data_test))
+}
+
+#Function to train and test regression model.
+reg_fun <- function(datalist){
+  regression_fit <- train(quality ~ ., data = datalist[[1]], method= "glm", 
+                          family = "binomial", 
+                          preProcess = c("center", "scale"), 
+                          trControl = trainControl(method = "cv", 
+                                                   number = 10))
+  out1 <- data.frame(regression_fit$results)
+  out2 <- summary(regression_fit)
+  out3 <- confusionMatrix(regression_fit, newdata = datalist[[2]])
+  return(list(out1, out2, out3))
+}
+
+#Function to train and test classification tree
+tree_fun <- function(datalist, cp_choice){
+  tree_fit <-train(quality ~ ., data = datalist[[1]], 
+                   method= "rpart", preProcess = c("center", "scale"), 
+                   tuneGrid = data.frame(cp = cp_choice), 
+                   trControl = trainControl(method = "cv", number = 10))
+  out1 <- data.frame(tree_fit$results)
+  out2 <- tree_fit$finalModel
+  out3 <- confusionMatrix(tree_fit, newdata = datalist[[2]])
+  return(list(out1, out2, out3))
+}
+
+#Function to train and test random forest.
+rf_fun <- function(datalist, m_choice){
+  train(quality ~ ., data = datalist[[1]], 
+        method= "rf", preProcess = c("center", "scale"), 
+        tuneGrid = data.frame(mtry = m_choice), 
+        importance = TRUE, 
+        trControl = trainControl(method = "cv", number = 10))
+  out1 <- data.frame(rf_fit$results)
+  out2 <- rf_fit$finalModel
+  out3 <- confusionMatrix(rf_fit, newdata = datalist[[2]])
+  return(list(out1, out2, out3))
+}
 
 shinyServer(function(input, output, session){
   #Data Tab Header Text
@@ -63,54 +112,54 @@ shinyServer(function(input, output, session){
     }
   })
   
-  #Table of data for data tab
-  data_selected <- reactive({
-    if(input$row_choice == "Include All"){wine_data %>% select(input$data_choice)
-    } else if(input$row_choice == "Red Only"){wine_data %>% select(input$data_choice) %>% filter(type == "red")
-      }else {wine_data %>% filter(type == "white") %>% select(input$data_choice) 
-      }
-  })
-  output$data_table <- renderDataTable({
-    data_selected()
-  })
+  #Modeling Section
+  #Run data splitting function and modeling function after button is pushed
+  datasplit <- eventReactive(input$go,
+                             {split_fun(selection = input$pred_choice, p_choice = input$p_choice)})
   
-  #Modeling section. Make this work with a run button
-  #model_string <- eventReactive(input$go, {paste(input$pred_choice, collapse = "+")
-  #})
+  result_reg <- eventReactive(input$go, {reg_fun(datalist = datasplit())})
+  result_tree <- eventReactive(input$go, {
+    tree_fun(datalist = datasplit(), cp_choice = input$cp_choice)})
+  result_rf <- eventReactive(input$go, {rf_fun(datalist = datasplit(), m_choice = input$m_choice)})
   
-  set.seed(371)
-  
-  #Allow this to be user-defined
-  #prop_choice <- 0.7
-  #m_choice <- 3
-  
-  #eventReactive(input$go, {
-    train_index <- createDataPartition(wine_data$quality, p=0.7, list=FALSE)
-    data_train <- wine_data[train_index, ]
-    data_test <- wine_data[-train_index, ]
-  #})
-    
-    #regression_fit <- eventReactive(input$go, {train(quality ~ alcohol, 
-                                                  #  data = data_train, method= "glm", 
-                                                   # family = "binomial", 
-                                                  #  preProcess = c("center", "scale"), 
-                                                   # trControl = trainControl(method = "cv", 
-                                                    #                         number = 10))
-   # })
-    #output$reg_summary <- renderTable({summary(regression_fit$finalModel)})
-    output$reg_results <- renderDataTable({
-      if(input$go){
-        model_string <- paste(input$pred_choice, collapse = "+")
-        regression_fit <- train(quality ~ model_string, data = data_train, method= "glm", 
-                                family = "binomial", 
-                                preProcess = c("center", "scale"), 
-                                trControl = trainControl(method = "cv", 
-                                                         number = 10))
-        data.frame(regression_fit$results)}
+  #Create outputs from regression model
+  output$reg_table <- renderTable({if(input$go)
+      result_reg()[[1]]
     })
+  output$reg_summary <- renderPrint({if(input$go)
+    result_reg()[[2]]
+    })
+  output$reg_conf <- renderPrint({if(input$go)
+    result_reg()[[3]]
+    })
+  
+  #Create outputs from tree model
+  output$tree_table <- renderTable({if(input$go)
+      result_tree()[[1]]
+    })
+  output$tree_summary <- renderPlot({if(input$go)
+    plot(result_tree()[[2]])
+    text(result_tree()[[2]])
+    })
+  output$tree_conf <- renderPrint({if(input$go)
+    result_tree()[[3]]
+    })
+  
+  #Create outputs from rf model
+  output$rf_table <- renderTable({if(input$go)
+      result_rf()[[1]]
+    })
+  output$rf_summary <- renderPlot({if(input$go)
+    varImpPlot(result_rf()[[2]])
+    })
+  output$rf_conf <- renderPrint({if(input$go)
+    result_rf()[[3]]
+    })
+  
+
     
     
-  #Prediction. Need to figure out getting an output here.
+  #Prediction Section
   output$pred_text <- renderText({
     prediction_values <- data.frame(alcohol = input$num_alcohol, 
                                     volatile_acidity = input$num_acid, 
@@ -128,10 +177,18 @@ shinyServer(function(input, output, session){
 
   
     
+  #Table of data for data tab
+  data_selected <- reactive({
+    if(input$row_choice == "Include All"){wine_data %>% select(input$data_choice)
+    } else if(input$row_choice == "Red Only"){wine_data %>% select(input$data_choice) %>% filter(type == "red")
+    }else {wine_data %>% filter(type == "white") %>% select(input$data_choice) 
+    }
+  })
+  output$data_table <- renderDataTable({
+    data_selected()
+  })
   
-  # downloadHandler() takes two arguments, both functions.
-  # The content function is passed a filename as an argument, and
-  #   it should write out data to that filename.
+  # Allow for downloading data
   output$downloadData <- downloadHandler(
     filename = "wine_export.csv",
     
