@@ -77,8 +77,8 @@ body <- dashboardBody(width = 600,
             )
     ),
     tabItem(tabName = "Model", withMathJax(),
-            
-            mainPanel(
+            #sidebarLayout(
+            mainPanel(width=12,
               title = "Modeling",
               tabsetPanel(type = "tabs",
                           tabPanel("Model Info",
@@ -219,6 +219,7 @@ body <- dashboardBody(width = 600,
                           )
               )
             )
+            
             
     ),
     #Data tab. Still need to add row filtering options.

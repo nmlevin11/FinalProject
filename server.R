@@ -64,11 +64,11 @@ tree_fun <- function(datalist, cp_choice){
 
 #Function to train and test random forest.
 rf_fun <- function(datalist, m_choice){
-  train(quality ~ ., data = datalist[[1]], 
-        method= "rf", preProcess = c("center", "scale"), 
-        tuneGrid = data.frame(mtry = m_choice), 
-        importance = TRUE, 
-        trControl = trainControl(method = "cv", number = 10))
+  rf_fit <- train(quality ~ ., data = datalist[[1]], 
+                  method= "rf", preProcess = c("center", "scale"), 
+                  tuneGrid = data.frame(mtry = m_choice), 
+                  importance = TRUE, 
+                  trControl = trainControl(method = "cv", number = 10))
   out1 <- data.frame(rf_fit$results)
   out2 <- rf_fit$finalModel
   out3 <- confusionMatrix(rf_fit, newdata = datalist[[2]])
