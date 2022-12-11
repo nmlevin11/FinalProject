@@ -51,7 +51,7 @@ body <- dashboardBody(width = 600,
                       h4("1. This About tab"),
                       h4("2. A Data Exploration tab with user configurable plots and
                          summary statistics"),
-                      h4("3. A Modeling tab to compare 3 different predictive models,
+                      h4("3. A Modeling tab to compare 3 different predictive models:
                          logistic regression, classification tree, and random forest."),
                       h4("4. A Data tab that allows the user to subset the dataset and
                          download it.")
@@ -122,7 +122,7 @@ body <- dashboardBody(width = 600,
                                       from bootstrap samples and the results are 
                                       averaged. Each individual tree uses a subset (m) 
                                       of the predictiors (p). For classification trees,
-                                      usually m is \\(\\sqrt{p}\\)"),
+                                      a typical m is \\(\\sqrt{p}\\)"),
                                    h5("One pro of using a random forest is that it 
                                       will often perform better for prediction over the
                                       single tree and regression models. One con is that 
@@ -131,7 +131,7 @@ body <- dashboardBody(width = 600,
                           #Modeling Panel
                           tabPanel("Modeling", 
                                    sidebarPanel(
-                                     h4("Select variables to include in model"),
+                                     h4("Select variables to include"),
                                      checkboxGroupInput("pred_choice",
                                                         label = "Variable Options",
                                                         choices = c("alcohol", 
@@ -146,7 +146,7 @@ body <- dashboardBody(width = 600,
                                                                     "sulphates", 
                                                                     "residual_sugar",
                                                                     "total_SO2")),
-                                     h4("Select model tuning parameters"),
+                                     h4("Select parameters"),
                                      sliderInput("p_choice", label = "Proportion for data split",
                                                  min=0.1, max=0.9, step=0.05, value = 0.7),
                                      sliderInput("cp_choice", label = "CP for Classification Tree fit",
