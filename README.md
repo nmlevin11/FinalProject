@@ -1,4 +1,4 @@
-# FinalProject
+# Final Project
 
 ## App Description
 This app can be used to perform data exploration, modeling, and prediction using data about wine from the UCI Machine Learning Repository. The app contains the following four tabs:  
