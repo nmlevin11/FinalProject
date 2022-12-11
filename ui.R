@@ -1,12 +1,17 @@
 
+#Nicole Levin
+#ST558 Final Project
+#12-11-2022
+
+#load packages
 library(caret)
 library(shiny)
-library(shinythemes)
 library(DT)
 library(shinydashboard)
 library(png)
 library(randomForest)
 
+#Setup dashboard sidebar
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("About", tabName = "About", icon = icon("info")),
@@ -16,8 +21,10 @@ sidebar <- dashboardSidebar(
   )
 )
 
+#Setup dashboard body
 body <- dashboardBody(width = 600,
   tabItems(
+    #Informational tab with picture
     tabItem(tabName = "About",
             sidebarLayout(sidebarPanel(img(src = "wine glass.png", height = "100%", 
                                            width = "100%", align = "center")),
@@ -31,53 +38,57 @@ body <- dashboardBody(width = 600,
                          and make predictions for the quality result of future data
                          points based on user-inputted values."),
                       h4("The data used in this app comes from two datasets, one for
-                         red wine and one for white, from the UCI Machine Learning
-                         Repository. The full datasets includes 11 physiochemical values,
+                         red and one for white variants of the Portuguese 'Vinho Verde' 
+                         wine. The data is available from the UCI Machine Learning
+                         Repository. The full datasets include 11 physiochemical values,
                          like sulphates and percent alcohol, and a sensory quality
                          score for each wine. For the purposes of this analysis, quality 
                          has been dichotomized such that a score greater than 5 is 
                          considered 'good' and a score of 5 or below is considered 'bad.'"),
-                      h4("The full dataset can be accessed", a(href = 
+                      h4("More info about the data and the full datasets can be accessed", a(href = 
                       "https://archive.ics.uci.edu/ml/datasets/Wine+Quality", "here")),
                       h4("The app contains 4 tabs:"), 
-                      h4("1. this About tab"),
-                      h4("2. a Data Exploration tab with user configurable plots and
+                      h4("1. This About tab"),
+                      h4("2. A Data Exploration tab with user configurable plots and
                          summary statistics"),
                       h4("3. A Modeling tab to compare 3 different predictive models,
                          logistic regression, classification tree, and random forest."),
-                      h4("4. a Data tab that allows the user to subset the dataset and
+                      h4("4. A Data tab that allows the user to subset the dataset and
                          download it.")
                       )
             )
     ),
     
+    #EDA tab
     tabItem(tabName = "EDA", 
             sidebarLayout(
               sidebarPanel(h1("Data Exploration"),
-                           selectInput("summary_choice", "Choose summary statistic for table",
-                                       choices = c("mean", "median")),
+                           #Options
+                           selectInput("filter_choice", "Filter by Wine Type",
+                                       choices = c("Include All", 
+                                                   "Red Only",
+                                                   "White Only")),
                            selectInput("x_choice", "Select variable to summarize",
                                        choices = c("alcohol", 
                                                    "volatile_acidity", 
                                                    "sulphates", 
                                                    "residual_sugar",
                                                    "total_SO2")),
+                           selectInput("summary_choice", "Choose summary statistic for table",
+                                       choices = c("mean", "median")),
                            selectInput("plot_choice", "Select Plot Type", 
-                                       choices = c("Histogram", "Boxplot")),
-                           selectInput("filter_choice", "Filter Plot by Wine Type",
-                                       choices = c("Include All", 
-                                                   "Red Only",
-                                                   "White Only"))
+                                       choices = c("Histogram", "Boxplot"))
               ),
+              #Table and plot
               mainPanel(h1(textOutput("header")),
-                #h1("Data Summaries"), 
                         dataTableOutput("tab"),
                         plotOutput("dataPlot")
               )
             )
     ),
+    #Modeling tab
     tabItem(tabName = "Model", withMathJax(),
-            #sidebarLayout(
+            #Info tab
             mainPanel(width=12,
               title = "Modeling",
               tabsetPanel(type = "tabs",
@@ -110,13 +121,14 @@ body <- dashboardBody(width = 600,
                                       tree based model where multiple trees are created
                                       from bootstrap samples and the results are 
                                       averaged. Each individual tree uses a subset (m) 
-                                      of the predictiors (p).for classification trees,
+                                      of the predictiors (p). For classification trees,
                                       usually m is \\(\\sqrt{p}\\)"),
                                    h5("One pro of using a random forest is that it 
                                       will often perform better for prediction over the
                                       single tree and regression models. One con is that 
-                                      you lose interprettability.")
+                                      you lose interpretability.")
                           ),
+                          #Modeling Panel
                           tabPanel("Modeling", 
                                    sidebarPanel(
                                      h4("Select variables to include in model"),
@@ -143,6 +155,7 @@ body <- dashboardBody(width = 600,
                                                  min = 1, max = 5, step = 1, value = 3),
                                      actionButton("go", "Run Models")
                                    ),
+                                   #Model output split into panels
                                    mainPanel(tabsetPanel(type = "tabs",
                                      tabPanel("Logistic Regression", box(width = 200,
                                                  h3("Logistic Regression Model"),
@@ -172,6 +185,7 @@ body <- dashboardBody(width = 600,
                                      ) 
                                      ))
                                    ),
+                          #Prediction panel
                           tabPanel("Prediction", sidebarLayout(
                                    sidebarPanel(h4("Select values of predictors"),
                                                 numericInput("num_alcohol",
@@ -222,10 +236,9 @@ body <- dashboardBody(width = 600,
             
             
     ),
-    #Data tab. Still need to add row filtering options.
+    #Data tab with download button
     tabItem(tabName = "Data",
             sidebarLayout(
-              
               sidebarPanel(checkboxGroupInput("data_choice",
                                               label = "Variable Options",
                                               choices = c("alcohol", 
@@ -251,6 +264,7 @@ body <- dashboardBody(width = 600,
   )
 )
 
+#Put it all together
 dashboardPage(skin = "red",
   dashboardHeader(title = "A Sip of Stats"),
   sidebar,

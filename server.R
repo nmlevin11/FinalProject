@@ -1,10 +1,14 @@
 
+#Nicole Levin
+#ST558 Final Project
+#12-11-2022
+
+#Load packages
 library(shiny)
 library(caret)
 library(tidyverse)
 library(DT)
 library(randomForest)
-
 
 #Import the data
 red_data <- read_delim("winequality-red.csv", delim = ";")
@@ -74,26 +78,59 @@ rf_fun <- function(datalist, m_choice){
   out3 <- confusionMatrix(rf_fit, newdata = datalist[[2]])
   return(list(out1, out2, out3))
 }
-
+ 
+#Interactive code section
 shinyServer(function(input, output, session){
   #Data Tab Header Text
   output$header <- renderText(paste0("Data summaries for ", input$x_choice))
-  #Table Setup
+  
+  #Table Setup allowing for user selections
   output$tab <- renderDataTable({
     variable_choice <- input$x_choice
-    if(input$summary_choice == "mean"){
-      wine_data %>%
-        select("type", variable_choice) %>% 
-        group_by(type) %>%
-        summarize("Mean" = round(mean(get(input$x_choice)), 2))
+    if(input$filter_choice == "Red Only"){
+      if(input$summary_choice == "mean"){
+        wine_data %>%
+          select("type", "quality", variable_choice) %>% 
+          filter(type == "red") %>%
+          group_by(quality) %>%
+          summarize("Mean" = round(mean(get(input$x_choice)), 2))
+      } else{
+        wine_data %>%
+          select("type", "quality", variable_choice) %>% 
+          filter(type == "red") %>%
+          group_by(quality) %>%
+          summarize("Median" = round(median(get(input$x_choice)), 2))
+      }
+    }else if(input$filter_choice == "White Only"){
+      if(input$summary_choice == "mean"){
+        wine_data %>%
+          select("type", "quality", variable_choice) %>% 
+          filter(type == "white") %>%
+        group_by(quality) %>%
+          summarize("Mean" = round(mean(get(input$x_choice)), 2))
+      } else{
+        wine_data %>%
+          select("type", "quality", variable_choice) %>% 
+          filter(type == "white") %>%
+        group_by(quality) %>%
+          summarize("Median" = round(median(get(input$x_choice)), 2))
+      }
     } else{
-      wine_data %>%
-        select("type", variable_choice) %>% 
-        group_by(type) %>%
-        summarize("Median" = round(median(get(input$x_choice)), 2))
+      if(input$summary_choice == "mean"){
+        wine_data %>%
+          select("quality", variable_choice) %>% 
+        group_by(quality) %>%
+          summarize("Mean" = round(mean(get(input$x_choice)), 2))
+      } else{
+        wine_data %>%
+          select("quality", variable_choice) %>% 
+        group_by(quality) %>%
+          summarize("Median" = round(median(get(input$x_choice)), 2))
+      }
     }
   })
-  #Plot setup. If statements used to decide which plot to make. For now just put a plot in.
+  
+  #Plot setup. If statements used to decide which plot to make.
   output$dataPlot <- renderPlot({
     #Filter Data
     if(input$filter_choice == "Red Only"){plot_data <- wine_data %>% filter(type == "red")
@@ -155,11 +192,8 @@ shinyServer(function(input, output, session){
   output$rf_conf <- renderPrint({if(input$go)
     result_rf()[[3]]
     })
-  
-
     
-    
-  #Prediction Section
+  #Prediction Section. Predict probability of a good wine based on user inputs
   output$pred_text <- renderText({
     prediction_values <- data.frame(alcohol = input$num_alcohol, 
                                     volatile_acidity = input$num_acid, 
@@ -175,8 +209,7 @@ shinyServer(function(input, output, session){
     result
   })
 
-  
-    
+  #Data Section 
   #Table of data for data tab
   data_selected <- reactive({
     if(input$row_choice == "Include All"){wine_data %>% select(input$data_choice)
@@ -192,10 +225,8 @@ shinyServer(function(input, output, session){
   output$downloadData <- downloadHandler(
     filename = "wine_export.csv",
     
-    # This function should write data to a file given to it by the argument 'file'.
+    # Function to right data to file.
     content = function(file) {
-      
-      # Write to a file specified by the 'file' argument. Right now this just uses my whole dataset.
       write.table(data_selected(), file, sep = ",", row.names = FALSE)
     }
   )
