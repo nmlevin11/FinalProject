@@ -8,14 +8,14 @@ This app can be used to perform data exploration, modeling, and prediction using
 3. A **Modeling** tab to compare 3 different predictive models: logistic regression, classification tree, and random forest
 4. A **Data** tab that allows the user to subset the dataset and download it
 
-## Required Packages (so far)
-`shiny`
-`shinydashboard`
-`caret`
-`tidyverse`
-`DT`
-`png`
-`randomForest`
+## Required Packages
+`shiny`  
+`shinydashboard`  
+`caret`  
+`tidyverse`  
+`DT`  
+`png`  
+`randomForest`  
 
 ## Code to Install Packages
 install.packages(c("shiny", "shinydashboard", "caret", "DT", "tidyverse", "png", "randomForest"))
